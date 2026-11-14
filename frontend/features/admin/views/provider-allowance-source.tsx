@@ -258,6 +258,7 @@ export function AllowanceSourceFields({
       <fieldset>
         <legend>{tx("额度请求头")}</legend>
         <p>{tx("请求头加密保存；已保存的值不会再次显示。")}</p>
+        <p>{tx("重命名已保存的请求头后，请重新输入值。")}</p>
         {headers.map((row) => (
           <div className="allowance-inline" key={row.id}>
             <input

@@ -17,13 +17,13 @@ Expression: $remaining; Week: subscription.weekly_usage_usd / subscription.weekl
 
 The expression reader supports labeled parts, currencies, percentages, arithmetic, collection filters and `sum`, `min`, `max`, `count`. One missing part stays unknown while readable parts remain visible. A completely unreadable response is a query failure. Structured windows additionally preserve amounts, limits, units, reset/expiry times, model include/exclude rules and pool membership. No reset date is invented when a supplier does not return one.
 
-Use the account key, a separate encrypted quota token, or encrypted custom headers. `{key}` substitutes the runtime key in an endpoint or header. Saved header values are redacted in read APIs; leaving the separate token blank retains it. Explicitly select its removal to delete it. Outbound requests use the gateway's existing URL, DNS, redirect and proxy guards. Cloud signing uses fixed control-plane hosts. Alibaba console tokens are encrypted and cached for twenty minutes.
+Use the account key, a separate encrypted quota token, or encrypted custom headers. `{key}` substitutes the runtime key in an endpoint or header. Saved header values are redacted in read APIs. Renaming a saved header requires re-entering its value; leaving the separate token blank retains it. Explicitly select its removal to delete it. Outbound requests use the gateway's existing URL, DNS, redirect and proxy guards. Cloud signing uses fixed control-plane hosts. Alibaba console tokens are encrypted and cached for twenty minutes.
 
 ## Usage and entitlement policies
 
 Model routing and account routing remain separate. Account policies only reorder or hold candidates already authorized for the current project/key, route, model and priority tier. The four strategies are quota smart, expiry first, least used and until exhausted. The default keeps the established order.
 
-Account and per-window caps can hold an account before its supplier limit. Amounts stay in their reported unit. Informational windows are excluded unless explicitly capped; pool caps apply only to their member models. Wallet amount caps use durable observed spending counters. Top-ups do not erase spending, and stale readings, restarts or history pruning cannot rewind a counter. Windows without a reset use a UTC day.
+Account and per-window caps can hold an account before its supplier limit. Window cap names must be unique after trimming whitespace and ignoring case; duplicates block saving and retain the form. Amounts stay in their reported unit. Informational windows are excluded unless explicitly capped; pool caps apply only to their member models. Wallet amount caps use durable observed spending counters. Top-ups do not erase spending, and stale readings, restarts or history pruning cannot rewind a counter. Windows without a reset use a UTC day.
 
 Credit policies are existing behavior, never, allow, first and last. Explicit first/last ordering stays within the same authorized route and priority tier. User caps cannot be bypassed by credits or automatic resets.
 

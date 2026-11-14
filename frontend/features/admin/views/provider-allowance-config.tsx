@@ -69,6 +69,16 @@ export function ProviderAllowanceConfigForm({
     setError("");
     setSaved(false);
     try {
+      const capEntries = caps.map((row) =>
+        [row.name.trim().toLowerCase(), row.value] as const,
+      );
+      if (new Set(capEntries.map(([name]) => name)).size !== caps.length)
+        throw new Error(tx("窗口名称不能重复。"));
+      if (headers.some((row) =>
+        row.name !== row.originalName &&
+        (row.value === "[redacted]" || !row.value.trim()),
+      ))
+        throw new Error(tx("重命名已保存的请求头后，请重新输入值。"));
       const response = await adminFetch(
         api,
         `/api/admin/provider-resources/${encodeURIComponent(entry.resource_id)}/allowance/config`,
@@ -95,9 +105,7 @@ export function ProviderAllowanceConfigForm({
             },
             policy: {
               ...draft.policy,
-              windows: Object.fromEntries(
-                caps.map((row) => [row.name.toLowerCase(), row.value]),
-              ),
+              windows: Object.fromEntries(capEntries),
             },
           }),
         },

@@ -10,12 +10,12 @@ import {
 const api = { baseURL: "http://localhost:8080", adminToken: "synthetic-admin" };
 afterEach(() => vi.unstubAllGlobals());
 
-function setup() {
+function setup(headers = {
+  "X-First": "synthetic-first",
+  "X-Second": "synthetic-second",
+}) {
   const entry = allowanceEntries()[0];
-  entry.config.source.headers = {
-    "X-First": "synthetic-first",
-    "X-Second": "synthetic-second",
-  };
+  entry.config.source.headers = headers;
   entry.config.policy.windows = {
     weekly: { percent: 70 },
     monthly: { percent: 90 },
@@ -53,6 +53,63 @@ async function save(state: ReturnType<typeof setup>) {
 }
 
 describe("Provider allowance form editing", () => {
+  it.each(["monthly", "MONTHLY", " MONTHLY "])(
+    "rejects duplicate normalized cap name %j without losing either row",
+    async (name) => {
+      const state = setup();
+      await state.user.click(screen.getByRole("button", { name: "使用与权益" }));
+      const names = screen.getAllByLabelText("窗口名称");
+      await state.user.clear(names[0]);
+      await state.user.type(names[0], name);
+      await state.user.click(screen.getByRole("button", { name: "保存额度配置" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent("窗口名称不能重复。");
+      expect(state.fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(0);
+      expect(state.saved).not.toHaveBeenCalled();
+      expect(names[0]).toHaveValue(name);
+      expect(names[1]).toHaveValue("monthly");
+      expect(screen.getAllByLabelText("窗口比例上限")[0]).toHaveValue(70);
+      await state.user.clear(names[0]);
+      await state.user.type(names[0], " DAILY ");
+      expect((await save(state)).policy.windows).toEqual({
+        daily: { percent: 70 },
+        monthly: { percent: 90 },
+      });
+    },
+  );
+  it("requires a replacement secret when renaming a saved header", async () => {
+    const state = setup({ "X-First": "[redacted]", "X-Second": "[redacted]" });
+    const name = screen.getAllByLabelText("请求头名称")[0];
+    await state.user.clear(name);
+    await state.user.type(name, "X-New");
+    await state.user.click(screen.getByRole("button", { name: "使用与权益" }));
+    await state.user.click(screen.getByRole("button", { name: "保存额度配置" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("重命名已保存的请求头后，请重新输入值。");
+    expect(state.fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(0);
+    expect(state.saved).not.toHaveBeenCalled();
+    await state.user.click(screen.getByRole("button", { name: "额度采集" }));
+    expect(screen.getAllByLabelText("请求头名称")[0]).toHaveValue("X-New");
+    const value = screen.getAllByLabelText("请求头值")[0];
+    await state.user.clear(value);
+    await state.user.click(screen.getByRole("button", { name: "保存额度配置" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("重命名已保存的请求头后，请重新输入值。");
+    await state.user.type(value, "synthetic-replacement");
+    expect((await save(state)).source.headers).toEqual({
+      "X-New": "synthetic-replacement",
+      "X-Second": "[redacted]",
+    });
+  });
+  it("retains a saved header when a rename is reverted", async () => {
+    const state = setup({ "X-First": "[redacted]", "X-Second": "[redacted]" });
+    const name = screen.getAllByLabelText("请求头名称")[0];
+    await state.user.clear(name);
+    await state.user.type(name, "X-New");
+    await state.user.clear(name);
+    await state.user.type(name, "X-First");
+    expect((await save(state)).source.headers).toEqual({
+      "X-First": "[redacted]",
+      "X-Second": "[redacted]",
+    });
+  });
   it("preserves typed model delimiters and normalizes scopes on save", async () => {
     const state = setup();
     const models = screen.getByLabelText("适用模型（逗号分隔）");

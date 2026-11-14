@@ -427,6 +427,11 @@ for (const mobile of [false, true]) {
     await headerNames.first().pressSequentially("X-New");
     await expect(headerNames.first()).toHaveValue("X-New");
     await expect(headerNames.nth(1)).toHaveValue("X-Second");
+    await console.getByRole("button", { name: "保存额度配置", exact: true }).click();
+    await expect(console.getByRole("alert")).toHaveText("重命名已保存的请求头后，请重新输入值。");
+    expect(api.calls.filter((call) => call.method === "PUT")).toHaveLength(0);
+    await capture(page, testInfo, console, `allowance-header-validation-${mode}`, "请求头改名后要求重新输入值", "viewport");
+    await console.getByLabel("请求头值", { exact: true }).first().fill("synthetic-replacement");
     await positionSegment(console.getByText("额度请求头", { exact: true }));
     await capture(
       page,
@@ -465,6 +470,11 @@ for (const mobile of [false, true]) {
     await console.getByLabel("窗口比例上限", { exact: true }).nth(1).fill("90");
     await capNames.first().fill("");
     await capNames.first().pressSequentially("monthly");
+    await console.getByRole("button", { name: "保存额度配置", exact: true }).click();
+    await expect(console.getByRole("alert")).toHaveText("窗口名称不能重复。");
+    expect(api.calls.filter((call) => call.method === "PUT")).toHaveLength(0);
+    await expect(console.getByLabel("窗口比例上限", { exact: true }).first()).toHaveValue("85");
+    await capture(page, testInfo, console, `allowance-cap-validation-${mode}`, "重复窗口名阻止保存并保留限额", "viewport");
     await capNames.first().fill("");
     await capNames.first().pressSequentially("daily");
     await expect(capNames.first()).toHaveValue("daily");
@@ -491,7 +501,7 @@ for (const mobile of [false, true]) {
     expect(api.calls.find((call) => call.method === "PUT")?.body).toMatchObject(
       {
         source: {
-          headers: { "X-New": "[redacted]", "X-Second": "synthetic-second" },
+          headers: { "X-New": "synthetic-replacement", "X-Second": "synthetic-second" },
           windows: [
             {
               models: ["gpt-*", "claude-*"],

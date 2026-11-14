@@ -1,5 +1,7 @@
 export const providerAllowanceTranslations = {
   en: {
+    "窗口名称不能重复。": "Window names must be unique.",
+    "重命名已保存的请求头后，请重新输入值。": "Re-enter the value after renaming a saved header.",
     "上限表达式": "Limit expression",
     "下次补充时间": "Next refill",
     "不限制": "No limit",
@@ -166,6 +168,8 @@ export const providerAllowanceTranslations = {
     "周额度耗尽": "Weekly quota exhausted"
   },
   ja: {
+    "窗口名称不能重复。": "ウィンドウ名は重複できません。",
+    "重命名已保存的请求头后，请重新输入值。": "保存済みヘッダーの名前を変更したら、値を再入力してください。",
     "上限表达式": "上限の式",
     "下次补充时间": "次回の補充日時",
     "不限制": "制限なし",
